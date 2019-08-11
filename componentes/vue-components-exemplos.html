@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="utf-8">
+        <title>Vue Components</title>
+    </head>
+    <body>
+        <div id="app">
+            <ola-mundo></ola-mundo>
+            <contar></contar>
+            <contar></contar>
+            <contar></contar>
+        </div>
+        <!-- development version, includes helpful console warnings -->
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+        <script>
+            Vue.component('ola-mundo', {
+                template: `
+                <h1>
+                    Olá mundo!
+                </h1> 
+                `
+            })
+
+            Vue.component('contar', {
+                template: `
+                    <div>
+                        <button type="button" @click="conte">Contar</button> {{contador}}    
+                    </div>
+                `,
+                data() {
+                    return {
+                        contador:0
+                    }
+                },
+                methods: {
+                    conte(){
+                        this.contador++;
+                    }
+                },
+            })
+            new Vue({
+                el: "#app",
+            })
+        </script>
+    </body>
+</html>
