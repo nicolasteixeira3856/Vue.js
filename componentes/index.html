@@ -25,14 +25,12 @@
             <div class="row">
                 <div class="col-md-12" v-show="visao!='tabela'">
                     <div class="form-inline"> 
-                        {{novoJogo.casa.time ? novoJogo.casa.time.nome : ''}}
-                        <img class="escudo" :src="novoJogo.casa.time ? novoJogo.casa.time.escudo : ''" alt="">
+                        <clube :time='novoJogo.casa.time' invertido='true' v-if='novoJogo.casa.time'></clube>
                         <input type="text" class="form-control col-md-1" v-model="novoJogo.casa.gols">
 
                         <span>&nbsp X &nbsp</span>
 
-                        {{novoJogo.fora.time ? novoJogo.fora.time.nome : ''}} 
-                        <img class="escudo"  :src="novoJogo.fora.time ? novoJogo.fora.time.escudo : '' " alt="">
+                        <clube :time='novoJogo.fora.time' invertido='false' v-if='novoJogo.fora.time'></clube>
                         <input type="text" class="form-control col-md-1" v-model="novoJogo.fora.gols">
 
                         <button type="button" class="btn btn-primary" @click="fimJogo">Fim de jogo</button> 
@@ -42,44 +40,9 @@
                 </div>
                     <hr>
                     <div class="col-md-12" v-show="visao=='tabela'">
-                        <input type="text" class="form-control" v-model="busca">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th v-for="(coluna, indice) in ordem.colunas">
-                                        <a href="" @click.prevent="ordenar(indice)">{{coluna | ucwords}}</a>
-                                    </th>
-                                    <!--<th>Saldo</th>-->
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="time in timesFiltrados">
-                                    <td>                   
-                                        <img :src="time.escudo" class="escudo"  alt="">
-                                        {{time.nome | ucwords}}
-                                    </td>
-                                    <td>{{time.pontos}}</td>
-                                    <td>{{time.gm}}</td>
-                                    <td>{{time.gs}}</td>
-                                    <td>{{time.saldo}}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <h3>Times classificados para Libertadores</h3>
-                        <ul>
-                            <li v-for="time in timesLibertadores">
-                                <img :src="time.escudo" class="escudo"  alt="">
-                                {{time.nome | ucwords}}
-                            </li>
-                        </ul><br>
-                        <h3>Times rebaixados</h3>
-                        <ul>
-                            <li v-for="time in timesRebaixadosLibertadores">
-                                <img :src="time.escudo" class="escudo"  alt="">
-                                {{time.nome | ucwords}}
-                            </li>
-                        </ul>
+                        <tabela-clubes :times='times'></tabela-clubes>
+                        <clubes-classificados :times='timesFiltrados'></clubes-classificados>
+                        <clubes-rebaixados :times='times'></clubes-rebaixados>
                     </div>
                 </div>
             </div>

@@ -1,10 +1,123 @@
+Vue.filter('ucwords', function (valor) {
+    return valor.charAt(0).toUpperCase() + valor.slice(1);
+})
+
 Vue.component('titulo', {
     template: `
-        <div class="row"> <!-- root element -->
-            <h1>Campeonato Brasileiro - Série A - 2018</h1>
-        </div>
+    <div class="row"> <!-- root element -->
+        <h1>Campeonato Brasileiro - Série A - 2018</h1>
+    </div>
     `
 })
+
+Vue.component(`clube`, {
+    props: [`time`, 'invertido'],
+    template: `
+    <div style='display: flex; flex-direction: row;'>
+        <img :src="time.escudo" class="escudo"  alt="" :style="{order: invertido == 'true' ? 1 : 2}">
+        <span :style="{order: invertido == 'true' ? 2 : 1}"> {{time.nome | ucwords}} </span>
+    </div>
+    `,
+})
+
+Vue.component('clubes-rebaixados', {
+    props: ['times'],
+    template: `
+    <div>
+        <h3>Times rebaixados</h3>
+        <ul>
+            <li v-for="time in timesRebaixadosLibertadores">
+                <clube :time='time'></clube>
+            </li>
+        </ul>
+    </div>
+    `,
+    computed: {
+        timesRebaixadosLibertadores(){
+            return this.times.slice(16,20);
+        }
+    },
+})
+
+Vue.component('clubes-classificados', {
+    props: ['times'],
+    template: `
+    <div>
+        <h3>Times classificados para Libertadores</h3>
+        <ul>
+            <li v-for="time in timesLibertadores">
+                <clube :time='time'></clube>
+            </li>
+        </ul><br>
+    </div>
+    `,
+    computed: {
+        timesLibertadores(){
+            return this.times.slice(0,6);
+        }
+    },
+})
+
+Vue.component('tabela-clubes', {
+    props: ['times'],
+    data(){
+        return {
+            busca: '',
+            ordem: {
+                colunas: ['pontos', 'gm', 'gs', 'saldo'],
+                orientacao: ['desc', 'des', 'asc', 'saldo']
+            },
+        }
+    },
+    template: `
+    <div>
+        <input type="text" class="form-control" v-model="busca">
+        <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th v-for="(coluna, indice) in ordem.colunas">
+                    <a href="" @click.prevent="ordenar(indice)">{{coluna | ucwords}}</a>
+                </th>
+                <!--<th>Saldo</th>-->
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="(time, indice) in timesFiltrados" :class='{ "table-success": indice<6 }' :style='{"font-size": indice < 6 ? "22px" : "16px"}'>
+                <td>                   
+                    <clube :time='time' invertido='true'></clube>
+                </td>
+                <td>{{time.pontos}}</td>
+                <td>{{time.gm}}</td>
+                <td>{{time.gs}}</td>
+                <td>{{time.saldo}}</td>
+            </tr>
+        </tbody>
+        </table>
+
+    </div>
+    `,
+    computed: {
+        timesFiltrados(){
+            var time = _.orderBy(this.times, this.ordem.colunas, this.ordem.orientacao)
+            var self = this;
+            return _.filter(this.timesOrdenados, function(time){
+                var busca = self.busca.toLowerCase();
+                return time.nome.toLowerCase().indexOf(busca) >= 0;
+            })
+        },
+        timesOrdenados(){
+            return _.orderBy(this.times, this.ordem.colunas, this.ordem.orientacao)
+        }
+    },
+    methods: {
+        ordenar(indice) {
+            //this.ordem.orientacao[indice] = this.ordem.orientacao[indice] =='desc'? 'asc':'desc';
+            this.$set(this.ordem.orientacao, indice, this.ordem.orientacao[indice] == 'desc' ? 'asc' : 'desc')
+        }
+    },
+})
+
 
 new Vue({
     el: "#app",
@@ -15,7 +128,7 @@ new Vue({
             colunas: ['pontos', 'gm', 'gs', 'saldo'],
             orientacao: ['desc', 'des', 'asc', 'saldo']
         },
-        times: [ 
+        times: [
             new Time('américa MG', 'assets/america_mg_60x60.png'), 
             new Time('atletico MG', 'assets/atletico_mg_60x60.png'), 
             new Time('Atlético PR', 'assets/atletico-pr_60x60.png'), 
@@ -50,20 +163,17 @@ new Vue({
         visao: 'tabela',
     },
     computed: {
-        timesLibertadores(){
-            return this.times.slice(0,6);
-        },
-        timesRebaixadosLibertadores(){
-            return this.times.slice(16,20);
-        },
         timesFiltrados(){
             console.log('Ordenou')
             var times = _.orderBy(this.times, this.ordem.colunas, this.ordem.orientacao)
             var self = this;
-            return _.filter(times, function(time){
+            return _.filter(this.timesOrdenados, function(time){
                 var busca = self.busca.toLowerCase();
                 return time.nome.toLowerCase().indexOf(busca) >= 0;
             })
+        },
+        timesOrdenados(){
+            return _.orderBy(this.times, this.ordem.colunas, this.ordem.orientacao)
         }
     },
     methods: {
@@ -101,9 +211,6 @@ new Vue({
     filters:{
         saldo(time){
             return time.gm - time.gs;
-        },
-        ucwords(valor){
-            return valor.charAt(0).toUpperCase() + valor.slice(1);
         },
         /*timesLibertadores(times){
             return
