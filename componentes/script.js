@@ -20,25 +20,6 @@ Vue.component(`clube`, {
     `,
 })
 
-Vue.component('clubes-rebaixados', {
-    props: ['times'],
-    template: `
-    <div>
-        <h3>Times rebaixados</h3>
-        <ul>
-            <li v-for="time in timesRebaixadosLibertadores">
-                <clube :time='time'></clube>
-            </li>
-        </ul>
-    </div>
-    `,
-    computed: {
-        timesRebaixadosLibertadores(){
-            return this.times.slice(16,20);
-        }
-    },
-})
-
 Vue.component('clubes-classificados', {
     props: ['times'],
     template: `
@@ -58,56 +39,78 @@ Vue.component('clubes-classificados', {
     },
 })
 
+Vue.component('clubes-rebaixados', {
+    props: ['times'],
+    template: `
+    <div>
+        <h3>Times rebaixados</h3>
+        <ul>
+            <li v-for="time in timesRebaixadosLibertadores">
+                <clube :time='time'></clube>
+            </li>
+        </ul>
+    </div>
+    `,
+    computed: {
+        timesRebaixadosLibertadores(){
+            return this.times.slice(16,20);
+        }
+    },
+})
+
 Vue.component('tabela-clubes', {
     props: ['times'],
-    data(){
+    data() {
         return {
             busca: '',
             ordem: {
                 colunas: ['pontos', 'gm', 'gs', 'saldo'],
-                orientacao: ['desc', 'des', 'asc', 'saldo']
+                orientacao: ['desc', 'desc', 'asc', 'desc']
             },
         }
     },
     template: `
-    <div>
-        <input type="text" class="form-control" v-model="busca">
-        <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th v-for="(coluna, indice) in ordem.colunas">
-                    <a href="" @click.prevent="ordenar(indice)">{{coluna | ucwords}}</a>
-                </th>
-                <!--<th>Saldo</th>-->
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="(time, indice) in timesFiltrados" :class='{ "table-success": indice<6 }' :style='{"font-size": indice < 6 ? "22px" : "16px"}'>
-                <td>                   
-                    <clube :time='time' invertido='true'></clube>
-                </td>
-                <td>{{time.pontos}}</td>
-                <td>{{time.gm}}</td>
-                <td>{{time.gs}}</td>
-                <td>{{time.saldo}}</td>
-            </tr>
-        </tbody>
-        </table>
-
-    </div>
-    `,
+       <div>
+            <input type="text" class="form-control" v-model="busca">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th v-for="(coluna, indice) in ordem.colunas">
+                        <a href="#" @click.prevent="ordenar(indice)">{{coluna | ucwords}}</a>
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="(time,indice) in timesFiltrados" :class="{'table-success': indice<6}" :style="{'font-size': indice<6?'17px': '15px'}">
+                    <td>
+                        <!--<img :src="time.escudo" alt="" class="escudo">-->
+                        <!--{{time.nome | ucwords}}-->
+                        <clube :time="time"></clube>
+                    </td>
+                    <td>{{time.pontos}}</td>
+                    <td>{{time.gm}}</td>
+                    <td>{{time.gs}}</td>
+                    <!--<td>{{time | saldo}}</td>-->
+                    <td>{{time.saldo}}</td>
+                </tr>
+                </tbody>
+            </table>
+            <clubes-classificados :times="timesOrdered"></clubes-classificados>
+            <clubes-rebaixados :times="timesOrdered"></clubes-rebaixados>
+       </div>
+   `,
     computed: {
-        timesFiltrados(){
-            var time = _.orderBy(this.times, this.ordem.colunas, this.ordem.orientacao)
+        timesFiltrados() {
+            console.log('ordenou', this.ordem);
             var self = this;
-            return _.filter(this.timesOrdenados, function(time){
+            return _.filter(this.timesOrdered, function (time) {
                 var busca = self.busca.toLowerCase();
                 return time.nome.toLowerCase().indexOf(busca) >= 0;
             })
         },
-        timesOrdenados(){
-            return _.orderBy(this.times, this.ordem.colunas, this.ordem.orientacao)
+        timesOrdered() {
+            return _.orderBy(this.times, this.ordem.colunas, this.ordem.orientacao);
         }
     },
     methods: {
@@ -115,19 +118,46 @@ Vue.component('tabela-clubes', {
             //this.ordem.orientacao[indice] = this.ordem.orientacao[indice] =='desc'? 'asc':'desc';
             this.$set(this.ordem.orientacao, indice, this.ordem.orientacao[indice] == 'desc' ? 'asc' : 'desc')
         }
-    },
-})
+    }
+});
 
+Vue.component('novo-jogo', {
+    props: ['timeCasa', 'timeFora'],
+    data(){
+        return {
+            golsCasa: 0,
+            golsFora: 0
+        }
+    },
+    template: `
+    <form class="form-inline">
+        <input type="text" class="form-control col-md-1" v-model="golsCasa">
+        <clube :time="timeCasa" invertido="true" v-if="timeCasa"></clube>
+        <span>X</span>
+        <clube :time="timeFora" v-if="timeFora"></clube>
+        <input type="text" class="form-control  col-md-1" v-model="golsFora">
+        <button type="button" class="btn btn-primary" @click="fimJogo">Fim de jogo</button>
+    </form>
+    `,
+    methods: {
+        fimJogo() {
+            var golsMarcados = parseInt(this.golsCasa);
+            var golsSofridos = parseInt(this.golsFora);
+            this.timeCasa.fimJogo(this.timeFora, golsMarcados, golsSofridos);
+            this.$emit('fim-jogo', {golsCasa: this.golsCasa, golsFora: this.golsFora});
+        },
+    }
+})
 
 new Vue({
     el: "#app",
     data: {
-        gols: '3',
-        busca: '',
-        ordem: {
-            colunas: ['pontos', 'gm', 'gs', 'saldo'],
-            orientacao: ['desc', 'des', 'asc', 'saldo']
-        },
+        // gols: '3',
+        // busca: '',
+        // ordem: {
+        //     colunas: ['pontos', 'gm', 'gs', 'saldo'],
+        //     orientacao: ['desc', 'des', 'asc', 'saldo']
+        // },
         times: [
             new Time('américa MG', 'assets/america_mg_60x60.png'), 
             new Time('atletico MG', 'assets/atletico_mg_60x60.png'), 
@@ -150,17 +180,9 @@ new Vue({
             new Time('Vasco', 'assets/vasco_60x60.png'), 
             new Time('Vitória', 'assets/vitoria_60x60.png') 
         ],
-        novoJogo:{
-            casa: {
-                time:null,
-                gols:0
-            },
-            fora:{
-                time:null,
-                gols:0
-            }
-        },
-        visao: 'tabela',
+        timeCasa: null,
+        timeFora: null,
+        visao: 'tabela'
     },
     computed: {
         timesFiltrados(){
@@ -177,43 +199,17 @@ new Vue({
         }
     },
     methods: {
-        showAlert(){
-            alert('Fim de jogo')
-        },
-        pegarValor($event){
-            console.log($event)
-        },
-        criarNovoJogo(){
+        criarNovoJogo() {
             var indiceCasa = Math.floor(Math.random() * 20),
-                indiceFora = Math.floor(Math.random() * 20)
+                indiceFora = Math.floor(Math.random() * 20);
 
-            this.novoJogo.casa.time = this.times[indiceCasa];
-            this.novoJogo.casa.gols = 0;
-            this.novoJogo.fora.time = this.times[indiceFora];
-            this.novoJogo.fora.gols = 0;
-
-            console.log(this.novoJogo);
+            this.timeCasa = this.times[indiceCasa];
+            this.timeFora = this.times[indiceFora];
             this.visao = 'placar';
         },
-        fimJogo(){
-            var golsCasa = parseInt(this.novoJogo.casa.gols);
-            var golsFora = parseInt(this.novoJogo.fora.gols);
-            var timeAdversario = this.novoJogo.fora.time;
-            var timeCasa = this.novoJogo.casa.time;
-            timeCasa.fimJogo(timeAdversario, golsCasa, golsFora)
-            this.visao = 'tabela';
-        },
-        ordenar(indice){
-            //this.ordem.orientacao[indice] = this.ordem.orientacao[indice] == 'desc' ? 'asc' : 'desc';
-            this.$set(this.ordem.orientacao, indice, this.ordem.orientacao[indice] == 'desc' ? 'asc' : 'desc')
+        showTabela(event){
+            console.log(event);
+            this.visao = 'tabela'
         }
-    },
-    filters:{
-        saldo(time){
-            return time.gm - time.gs;
-        },
-        /*timesLibertadores(times){
-            return
-        }*/
     }
-})
+});
